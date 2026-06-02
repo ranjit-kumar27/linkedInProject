@@ -1,0 +1,14 @@
+# Mac
+.DS_Store
+
+# IntelliJ
+.idea/
+*.iml
+
+# Maven
+target/
+
+# Spring Boot configs
+**/application.properties
+**/application.yml
+**/application.yaml
