@@ -1,5 +1,8 @@
 package com.example.linkedinProject.postsService.service;
 
+import com.example.linkedinProject.postsService.auth.AuthContextHolder;
+import com.example.linkedinProject.postsService.client.ConnectionsServiceClient;
+import com.example.linkedinProject.postsService.dto.PersonDto;
 import com.example.linkedinProject.postsService.dto.PostCreateRequestDto;
 import com.example.linkedinProject.postsService.dto.PostDto;
 import com.example.linkedinProject.postsService.entity.Post;
@@ -9,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Service;
 
 
@@ -22,6 +26,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final ModelMapper modelMapper;
+    private final ConnectionsServiceClient connectionsServiceClient;
 
     public PostDto createPost(PostCreateRequestDto postCreateRequestDto,Long userId) {
         log.info("Creating post for user with id {}", userId);
@@ -32,7 +37,14 @@ public class PostService {
     }
 
     public PostDto getPostById(Long postId) {
-        log.info("Getting the post with id {}", postId);
+        log.info("Getting the post with ID {}", postId);
+        Long userId = AuthContextHolder.getCurrentUserId();
+
+        //TODO:Remove in future
+        //call the connection Service from the post  service and pass the userId inside the headers
+
+        List<PersonDto> personDtoList =connectionsServiceClient.getFirstDegreeConnections(userId);
+
         Post post = postRepository.findById(postId).orElseThrow(()->new ResourceNotFoundException("Post not found " +
                 "with ID " + postId ));
         return modelMapper.map(post, PostDto.class);
