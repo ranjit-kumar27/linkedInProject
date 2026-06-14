@@ -4,6 +4,7 @@ import com.example.linkedinProject.userService.dto.LoginRequestDto;
 import com.example.linkedinProject.userService.dto.SignupRequestDto;
 import com.example.linkedinProject.userService.dto.UserDto;
 import com.example.linkedinProject.userService.entity.User;
+import com.example.linkedinProject.userService.event.UserCreatedEvent;
 import com.example.linkedinProject.userService.exception.BadRequestException;
 import com.example.linkedinProject.userService.exception.ResourceNotFoundException;
 import com.example.linkedinProject.userService.repository.UserRepository;
@@ -11,6 +12,7 @@ import com.example.linkedinProject.userService.utils.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,9 +20,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AuthService {
 
+    private final KafkaTemplate<Long, UserCreatedEvent> userCreatedEventKafkaTemplate;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final JwtService jwtService;
+
 
     public UserDto signUp(SignupRequestDto signupRequestDto) {
         log.info("Signup a user with email: {}", signupRequestDto.getEmail());
@@ -34,6 +38,12 @@ public class AuthService {
         user.setPassword(BCrypt.hash(signupRequestDto.getPassword()));
 
         user=userRepository.save(user);
+        UserCreatedEvent userCreatedEvent= UserCreatedEvent.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .build();
+//        userCreatedEventKafkaTemplate.send("user_created_topic", userCreatedEvent);
+
         return modelMapper.map(user, UserDto.class);
     }
 
@@ -44,7 +54,7 @@ public class AuthService {
                 new BadRequestException("Incorrect email or password"));
 
         boolean isPasswordMatch= BCrypt.match(loginRequestDto.getPassword(), user.getPassword());
-        if(isPasswordMatch){
+        if(!isPasswordMatch){
             throw new BadRequestException("Invalid email or password");
         }
 
