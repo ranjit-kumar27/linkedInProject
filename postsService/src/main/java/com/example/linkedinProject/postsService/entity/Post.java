@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +20,8 @@ public class Post {
 
     @Column(nullable = false)
     private String content;
+
+    private String imageUrl;
 
     @Column(nullable = false)
     private Long userId;
